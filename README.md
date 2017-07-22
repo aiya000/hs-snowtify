@@ -10,6 +10,8 @@ $ snowtify test
 (`stack test` results is shown, it is like above screenshot)
 $ snowtify build
 (same as snowtify test, but stack build is executed)
+$ snowtify
+(same as snowtify build, snowtify run build by default)
 ```
 
 
