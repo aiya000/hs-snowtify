@@ -23,3 +23,18 @@ $ cd <some haskell project directory>
 $ watchexec -w . 'snotify test'
 (`stack test` results is shown after you update some file)
 ```
+
+
+# :diamonds: How to install this ? :diamonds:
+
+- This way is never supported now ~~1. Use haskell-stack~~
+
+```console
+$ stack install snowtify
+```
+
+- 2. Use cabal
+
+```console
+$ cabal install snowtify
+```
