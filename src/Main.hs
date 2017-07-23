@@ -11,14 +11,15 @@ import Data.List (foldl')
 import Data.Monoid ((<>))
 import Data.Text (Text)
 import Safe (headMay)
-import Turtle (Shell, sh, arguments, procStrictWithErr, ExitCode(..), cut, Pattern, newline, spaces, proc)
+import Turtle (Shell, ExitCode, Pattern)
 import qualified Data.Text as T
 import qualified Data.Text.IO as TIO
+import qualified Turtle as TT
 
 
 -- | Call `execute` with a haskell-stack command
 main :: IO ()
-main = runEitherT getBuildCommand >>= sh . execute
+main = runEitherT getBuildCommand >>= TT.sh . execute
   where
     -- Get a sub command of haskell-stack from CLI arguments.
     -- This must be "build" or "test", or empty.
@@ -26,7 +27,7 @@ main = runEitherT getBuildCommand >>= sh . execute
     -- If CLI arguments is neither "build" nor "test", throw an exception.
     getBuildCommand :: (MonadIO m, MonadThrow m) => m Text
     getBuildCommand = do
-      args <- headMay <$> liftIO arguments
+      args <- headMay <$> liftIO TT.arguments
       case args of
         Nothing      -> return "build" -- run 'build' by default
         Just "test"  -> return "test"
@@ -37,9 +38,9 @@ main = runEitherT getBuildCommand >>= sh . execute
 execute :: Either SomeException Text -> Shell ()
 execute (Left err)      = liftIO $ print err
 execute (Right command) = do
-  (exitCode, out, err) <- procStrictWithErr "stack" [command] ""
+  (exitCode, out, err) <- TT.procStrictWithErr "stack" [command] ""
   let result = out <> err
-  let notifyer = if exitCode == ExitSuccess
+  let notifyer = if exitCode == TT.ExitSuccess
                     then notifySucceeding
                     else notifyErrors
   notifyer result
@@ -52,16 +53,16 @@ notifySucceeding = void . notifySend . ("stack test is succeed: " <>)
 -- | Show errors with the notify-daemon
 notifyErrors :: Text -> Shell ()
 notifyErrors result = do
-  let blobs = cut sections result
+  let blobs = TT.cut sections result
   notifySend "stack test is finished with errors"
   forM_ blobs $ \blob ->
     when (isErrorSection blob) . void $ notifySend blob
   where
     sections :: Pattern ()
     sections = void $ do
-      newline
-      spaces
-      newline
+      TT.newline
+      TT.spaces
+      TT.newline
 
     isErrorSection :: Text -> Bool
     isErrorSection x =
@@ -72,4 +73,4 @@ notifyErrors result = do
 
 -- | Send a message to the notify-daemon
 notifySend :: Text -> Shell ExitCode
-notifySend msg = proc "notify-send" ["snowtify", msg] ""
+notifySend msg = TT.proc "notify-send" ["snowtify", msg] ""
