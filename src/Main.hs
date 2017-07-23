@@ -6,6 +6,7 @@ import Control.Exception.Safe (MonadThrow, SomeException)
 import Control.Monad (void, forM, when)
 import Control.Monad.IO.Class (MonadIO, liftIO)
 import Control.Monad.Trans.Either (runEitherT)
+import Data.Default (Default(..))
 import Data.Either (isLeft)
 import Data.List (foldl')
 import Data.Monoid ((<>))
@@ -50,7 +51,7 @@ execute (Right command) = do
 notifySucceeding :: Text -> Text -> Shell ExitCode
 notifySucceeding command result = do
   notifySend $ "stack " <> command <> " is succeed"
-  notifySend result
+  whenDef (not $ T.null result) $ notifySend result
 
 -- | Show errors with the notify-daemon
 notifyErrors :: Text -> Text -> Shell ExitCode
@@ -58,8 +59,7 @@ notifyErrors command result = do
   let blobs = TT.cut sections result
   notifySend $ "stack " <> command <> " is finished with errors"
   (totalize <$>) . forM blobs $ \blob ->
-    if isErrorSection blob then notifySend blob
-                           else return TT.ExitSuccess
+    whenDef (isErrorSection blob) $ notifySend blob
   where
     sections :: Pattern ()
     sections = void $ do
@@ -98,3 +98,14 @@ exitCode n = TT.ExitFailure n
 -- | Send a message to the notify-daemon
 notifySend :: Text -> Shell ExitCode
 notifySend msg = TT.proc "notify-send" ["snowtify", msg] ""
+
+
+-- | for `whenDef`
+instance Default ExitCode where
+  def = TT.ExitSuccess
+
+
+-- | Simular to `when` but don't forget result
+whenDef :: (Applicative f, Default a) => Bool -> f a -> f a
+whenDef True f  = f
+whenDef False _ = pure def
