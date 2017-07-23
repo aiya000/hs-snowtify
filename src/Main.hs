@@ -3,7 +3,7 @@
 module Main (main) where
 
 import Control.Exception.Safe (MonadThrow, SomeException)
-import Control.Monad (void, forM_, when)
+import Control.Monad (void, forM, when)
 import Control.Monad.IO.Class (MonadIO, liftIO)
 import Control.Monad.Trans.Either (runEitherT)
 import Data.Either (isLeft)
@@ -19,7 +19,7 @@ import qualified Turtle as TT
 
 -- | Call `execute` with a haskell-stack command
 main :: IO ()
-main = runEitherT getBuildCommand >>= TT.sh . execute
+main = runEitherT getBuildCommand >>= void . TT.sh . execute
   where
     -- Get a sub command of haskell-stack from CLI arguments.
     -- This must be "build" or "test", or empty.
@@ -35,28 +35,31 @@ main = runEitherT getBuildCommand >>= TT.sh . execute
         Just unknown -> fail . T.unpack $ "snowtify doesn't know '" <> unknown <> "' command x("
 
 
-execute :: Either SomeException Text -> Shell ()
-execute (Left err)      = liftIO $ print err
+execute :: Either SomeException Text -> Shell ExitCode
+execute (Left err)      = notifySend . T.pack $ show err
 execute (Right command) = do
   (exitCode, out, err) <- TT.procStrictWithErr "stack" [command] ""
   let result = out <> err
   let notifyer = if exitCode == TT.ExitSuccess
                     then notifySucceeding
                     else notifyErrors
-  notifyer result
+  notifyer command result
 
 
 -- | Show succeeding with the notify-daemon
-notifySucceeding :: Text -> Shell ()
-notifySucceeding = void . notifySend . ("stack test is succeed: " <>)
+notifySucceeding :: Text -> Text -> Shell ExitCode
+notifySucceeding command result = do
+  notifySend $ "stack " <> command <> " is succeed"
+  notifySend result
 
 -- | Show errors with the notify-daemon
-notifyErrors :: Text -> Shell ()
-notifyErrors result = do
+notifyErrors :: Text -> Text -> Shell ExitCode
+notifyErrors command result = do
   let blobs = TT.cut sections result
-  notifySend "stack test is finished with errors"
-  forM_ blobs $ \blob ->
-    when (isErrorSection blob) . void $ notifySend blob
+  notifySend $ "stack " <> command <> " is finished with errors"
+  (totalize <$>) . forM blobs $ \blob ->
+    if isErrorSection blob then notifySend blob
+                           else return TT.ExitSuccess
   where
     sections :: Pattern ()
     sections = void $ do
@@ -69,6 +72,27 @@ notifyErrors result = do
       case headMay $ T.lines x of
         Nothing        -> False
         Just firstLine -> any (== "error:") $ T.words firstLine
+
+
+-- |
+-- If all `ExitCode` is `ExitSuccess`, return `ExitSuccess`.
+-- Otherwise, return `ExitFailure 1`.
+totalize :: [ExitCode] -> ExitCode
+totalize = exitCode . extremize . sum . map weaken
+  where
+    weaken :: ExitCode -> Int
+    weaken TT.ExitSuccess     = 0
+    weaken (TT.ExitFailure n) = n
+
+    extremize :: Int -> Int
+    extremize 0 = 0
+    extremize _ = 1
+
+
+-- | Generalized a value constructor of `ExitCode`
+exitCode :: Int -> ExitCode
+exitCode 0 = TT.ExitSuccess
+exitCode n = TT.ExitFailure n
 
 
 -- | Send a message to the notify-daemon
