@@ -20,7 +20,7 @@ $ snowtify
 $ dunst &
 (dunst is a notify-daemon)
 $ cd <some haskell project directory>
-$ watchexec -w . 'snotify test'
+$ watchexec -w . 'snowtify test'
 (`stack test` results is shown after you update some file)
 ```
 
