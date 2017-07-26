@@ -6,10 +6,11 @@ import Control.Exception.Safe (MonadThrow, SomeException)
 import Control.Monad (void, forM, when)
 import Control.Monad.IO.Class (MonadIO, liftIO)
 import Control.Monad.Trans.Either (runEitherT)
+import Data.Bifunctor (first)
 import Data.Default (Default(..))
 import Data.Either (isLeft)
 import Data.List (foldl')
-import Data.Monoid ((<>))
+import Data.Monoid ((<>), Any(..))
 import Data.Text (Text)
 import Safe (headMay)
 import Turtle (Shell, ExitCode, Pattern)
@@ -56,22 +57,40 @@ notifySucceeding command result = do
 -- | Show errors with the notify-daemon
 notifyErrors :: Text -> Text -> Shell ExitCode
 notifyErrors command result = do
-  let blobs = TT.cut sections result
   notifySend $ "stack " <> command <> " is finished with errors"
-  (totalize <$>) . forM blobs $ \blob ->
-    whenDef (isErrorSection blob) $ notifySend blob
+  notifySections ["error", "warning"] result
+
+
+-- |
+-- This is used for judge any section from a result of `stack (build|test)`.
+--
+-- This value is \1 of "^.*:\w+:\w+: (.+):$".
+type SectionWord = Text
+
+
+-- |
+-- Send sections to the notify-daemon.
+-- The sections are cut from a result of `stack (build|test)` with `[SectionWord]`.
+notifySections :: [SectionWord] -> Text -> Shell ExitCode
+notifySections = ((totalize <$>) .) . (mapM notifySend .) . sections
   where
-    sections :: Pattern ()
-    sections = void $ do
+    sections :: [SectionWord] -> Text -> [Text]
+    sections sWords result =
+      let blobs = TT.cut resultDelimiter result
+      in [y | p <- map isItSection sWords, (x,y) <- map twice blobs, p x]
+
+    -- A delimiter for cut result to sections
+    resultDelimiter :: Pattern ()
+    resultDelimiter = void $ do
       TT.newline
       TT.spaces
       TT.newline
 
-    isErrorSection :: Text -> Bool
-    isErrorSection x =
+    isItSection :: Text -> Text -> Bool
+    isItSection it x =
       case headMay $ T.lines x of
         Nothing        -> False
-        Just firstLine -> any (== "error:") $ T.words firstLine
+        Just firstLine -> any (== it) $ T.words firstLine
 
 
 -- |
@@ -100,12 +119,14 @@ notifySend :: Text -> Shell ExitCode
 notifySend msg = TT.proc "notify-send" ["snowtify", msg] ""
 
 
+twice :: a -> (a, a)
+twice x = (x, x)
+
 -- | for `whenDef`
 instance Default ExitCode where
   def = TT.ExitSuccess
 
 
--- | Simular to `when` but don't forget result
 whenDef :: (Applicative f, Default a) => Bool -> f a -> f a
 whenDef True f  = f
 whenDef False _ = pure def
