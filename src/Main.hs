@@ -7,7 +7,6 @@ import Control.Monad (void, forM, when)
 import Control.Monad.IO.Class (MonadIO, liftIO)
 import Control.Monad.Trans.Either (runEitherT)
 import Data.Bifunctor (first)
-import Data.Default (Default(..))
 import Data.Either (isLeft)
 import Data.List (foldl')
 import Data.Monoid ((<>), Any(..))
@@ -52,7 +51,7 @@ execute (Right command) = do
 notifySucceeding :: Text -> Text -> Shell ExitCode
 notifySucceeding command result = do
   notifySend $ "stack " <> command <> " is succeed"
-  whenDef (not $ T.null result) $ notifySend result
+  notifySections ["warning"] result
 
 -- | Show errors with the notify-daemon
 notifyErrors :: Text -> Text -> Shell ExitCode
@@ -121,12 +120,3 @@ notifySend msg = TT.proc "notify-send" ["snowtify", msg] ""
 
 twice :: a -> (a, a)
 twice x = (x, x)
-
--- | for `whenDef`
-instance Default ExitCode where
-  def = TT.ExitSuccess
-
-
-whenDef :: (Applicative f, Default a) => Bool -> f a -> f a
-whenDef True f  = f
-whenDef False _ = pure def
