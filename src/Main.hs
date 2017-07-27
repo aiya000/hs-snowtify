@@ -51,6 +51,7 @@ execute (Right command) = do
 notifySucceeding :: Text -> Text -> Shell ExitCode
 notifySucceeding command result = do
   notifySend $ "stack " <> command <> " is succeed"
+  --TODO: Don't work
   notifySections ["warning"] result
 
 -- | Show errors with the notify-daemon
@@ -87,9 +88,10 @@ notifySections = ((totalize <$>) .) . (mapM notifySend .) . sections
 
     isItSection :: Text -> Text -> Bool
     isItSection it x =
-      case headMay $ T.lines x of
+      let it' = it <> ":" -- 'it' is \1 of "^.*:\w+:\w+: (.+):$"
+      in case headMay $ T.lines x of
         Nothing        -> False
-        Just firstLine -> any (== it) $ T.words firstLine
+        Just firstLine -> any (== it') $ T.words firstLine
 
 
 -- |
