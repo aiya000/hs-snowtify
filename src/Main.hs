@@ -3,18 +3,14 @@
 module Main (main) where
 
 import Control.Exception.Safe (MonadThrow, SomeException)
-import Control.Monad (void, forM, when)
+import Control.Monad (void)
 import Control.Monad.IO.Class (MonadIO, liftIO)
 import Control.Monad.Trans.Either (runEitherT)
-import Data.Bifunctor (first)
-import Data.Either (isLeft)
-import Data.List (foldl')
-import Data.Monoid ((<>), Any(..))
+import Data.Monoid ((<>))
 import Data.Text (Text)
 import Safe (headMay)
 import Turtle (Shell, ExitCode, Pattern)
 import qualified Data.Text as T
-import qualified Data.Text.IO as TIO
 import qualified Turtle as TT
 
 
