@@ -1,5 +1,5 @@
 name:                snowtify
-version:             0.1.0.1
+version:             0.1.0.2
 synopsis:            snowtify send your result of `stack build` (`stack test`) to notify-daemon :dog2:
 description:         snowtify send your result of `stack build` (`stack test`) to notify-daemon :dog2:
 homepage:            https://github.com/aiya000/hs-snowtify#README.md
