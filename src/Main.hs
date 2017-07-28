@@ -35,6 +35,7 @@ main = runEitherT getBuildCommand >>= void . TT.sh . execute
 execute :: Either SomeException Text -> Shell ExitCode
 execute (Left err)      = notifySend . T.pack $ show err
 execute (Right command) = do
+  notifySend $ "'" <> command <> "' will be started"
   (exitCode, out, err) <- TT.procStrictWithErr "stack" [command] ""
   let result = out <> err
   let notifyer = if exitCode == TT.ExitSuccess
