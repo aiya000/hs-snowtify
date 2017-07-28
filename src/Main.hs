@@ -48,13 +48,13 @@ execute (Right command) = do
 notifySucceeding :: Text -> Text -> Shell ExitCode
 notifySucceeding command result = do
   notifySend $ "stack " <> command <> " is succeed"
-  notifySections ["warning"] result
+  notifySections ["warning", "cycle"] result
 
 -- | Show errors with the notify-daemon
 notifyErrors :: Text -> Text -> Shell ExitCode
 notifyErrors command result = do
   notifySend $ "stack " <> command <> " is finished with errors"
-  notifySections ["error", "warning"] result
+  notifySections ["error", "warning", "cycle"] result
 
 
 -- |
