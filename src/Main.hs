@@ -85,9 +85,7 @@ notifySections = ((totalize <$>) .) . (mapM notifySend .) . sections
     isItSection :: Text -> Text -> Bool
     isItSection it x =
       let it' = it <> ":" -- 'it' is \1 of "^.*:\w+:\w+: (.+):$"
-      in case headMay $ T.lines x of
-        Nothing        -> False
-        Just firstLine -> any (== it') $ T.words firstLine
+      in any (== it') . concatMap T.words $ T.lines x
 
 
 -- |
