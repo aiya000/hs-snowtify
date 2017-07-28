@@ -47,7 +47,6 @@ execute (Right command) = do
 notifySucceeding :: Text -> Text -> Shell ExitCode
 notifySucceeding command result = do
   notifySend $ "stack " <> command <> " is succeed"
-  --TODO: Don't work
   notifySections ["warning"] result
 
 -- | Show errors with the notify-daemon
