@@ -1,6 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module Main (main) where
+module Snowtify.Main (defaultMain) where
 
 import Control.Exception.Safe (MonadThrow, SomeException)
 import Control.Monad (void)
@@ -15,8 +15,8 @@ import qualified Turtle as TT
 
 
 -- | Call `execute` with a haskell-stack command
-main :: IO ()
-main = runEitherT getBuildCommand >>= void . TT.sh . execute
+defaultMain :: IO ()
+defaultMain = runEitherT getBuildCommand >>= void . TT.sh . execute
   where
     -- Get a sub command of haskell-stack from CLI arguments.
     -- This must be "build" or "test", or empty.

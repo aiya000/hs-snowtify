@@ -10,22 +10,30 @@ license: MIT
 homepage: https://github.com/aiya000/hs-snowtify#README.md
 
 ghc-options:
-- -Wall
-- -Wno-name-shadowing
-- -Wno-unused-do-bind
-- -Wno-type-defaults
-- -Wno-orphans
-- -fprint-potential-instances
+  - -Wall
+  - -Wno-name-shadowing
+  - -Wno-unused-do-bind
+  - -Wno-type-defaults
+  - -Wno-orphans
+  - -fprint-potential-instances
 
 dependencies:
-- base >=4.7 && <5
-- either
-- safe
-- safe-exceptions
-- text
-- turtle
+  - base >=4.7 && <5
+  - either
+  - safe
+  - safe-exceptions
+  - text
+  - turtle
+
+library:
+  source-dirs: src
 
 executables:
   snowtify:
+    dependencies: snowtify
+    ghc-options:
+      - -threaded
+      - -rtsopts
+      - -with-rtsopts=-N
+    source-dirs: app
     main: Main.hs
-    source-dirs: src
