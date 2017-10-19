@@ -1,0 +1,31 @@
+name: snowtify
+version: '0.1.0.3'
+synopsis: 'snowtify send your result of `stack build` (`stack test`) to notify-daemon :dog2:'
+description: 'snowtify send your result of `stack build` (`stack test`) to notify-daemon :dog2:'
+category: Simple
+author: aiya000
+maintainer: aiya000.develop@gmail.com
+copyright: aiya000
+license: MIT
+homepage: https://github.com/aiya000/hs-snowtify#README.md
+
+ghc-options:
+- -Wall
+- -Wno-name-shadowing
+- -Wno-unused-do-bind
+- -Wno-type-defaults
+- -Wno-orphans
+- -fprint-potential-instances
+
+dependencies:
+- base >=4.7 && <5
+- either
+- safe
+- safe-exceptions
+- text
+- turtle
+
+executables:
+  snowtify:
+    main: Main.hs
+    source-dirs: src
